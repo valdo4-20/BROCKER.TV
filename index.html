@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BROCKER.TV - Painel de Transmissão</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Inter from Google Fonts for body/text. Place Delight font files in assets/fonts/ -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="topbar">
+    <!-- Logo como texto: remove imagem e exibe texto 'BROCKER.TV' com fonte Delight Black -->
+    <div class="logo-wrap">
+        <div class="logo-text">BROCKER.TV</div>
+    </div>
+    <nav>
+        <a href="#" class="info-link" data-info="documents" rel="noopener">Documentos</a>
+        <a href="#" class="info-link" data-info="github" rel="noopener">Github</a>
+        <a href="#" class="info-link" data-info="company" rel="noopener">Empresa</a>
+        <a href="#" class="info-link" data-info="resources" rel="noopener">Recursos</a>
+    </nav>
+    <div class="profile">
+        <!-- XP: barra dinâmica. Para alterar estilos, editar `style.css` nas classes .xp-container, .xp-bar e .xp-fill -->
+        <div class="xp-container" id="xpContainer">
+            <div class="xp-label" id="xpLabel">XP 200 / 1000 (Lvl 1)</div>
+            <div class="xp-bar" id="xpBar"><div class="xp-fill" id="xpFill" style="width:20%"></div></div>
+        </div>
+        <!-- Ao clicar em .user abre o modal de perfil -->
+        <div class="user" id="profileBtn" role="button" tabindex="0">Bikyrt ▾</div>
+        <!-- Auth quick actions (visíveis quando não logado) -->
+        <div class="auth-actions">
+            <button id="authLoginBtn" class="btn small outline">Entrar</button>
+            <button id="authRegisterBtn" class="btn small">Cadastrar</button>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+    <div class="grid top-grid">
+        <section class="panel big-panel">
+            <h2 class="panel-title">Conectar plataforma</h2>
+            <p class="muted">Conecte sua conta para autorizar o Kyvo a transmitir em seu nome, ou cole manualmente a Stream Key.</p>
+
+            <div class="auth-row">
+                <!-- To change the button color, edit the CSS classes: .connect-twitch, .connect-yt, .connect-kick -->
+                <!-- To change the logo images, replace the src on the <img> elements below (classes: logo-twitch, logo-yt, logo-kick) -->
+                <button class="btn outline connect-twitch">
+                    <img class="logo logo-twitch" src="images/twitch.png" alt="Twitch logo">Conectar: Usuário
+                </button>
+                <button class="btn outline connect-yt">
+                    <img class="logo logo-yt" src="images/google.png" alt="Google / YouTube logo">Conectar: Usuário
+                </button>
+                <button class="btn outline connect-steam">
+                    <img class="logo logo-steam" src="images/steam.png" alt="Steam logo">Conectar: Usuário
+                </button>
+                <button class="btn outline connect-kick">
+                    <img class="logo logo-kick" src="images/kick.webp" alt="Kick logo">Conectar: Usuário
+                </button>
+            </div>
+        </section>
+
+        <section class="panel big-panel">
+            <h2 class="panel-title"> 
+                <span id="liveTitleDisplay" class="editable-title" tabindex="0">Qual o título da sua live?</span>
+            </h2>
+
+            <div class="title-input">
+                <!-- editor escondido até o usuário clicar no título -->
+                <input type="text" id="liveTitle" class="hidden-editor" placeholder="Título da live">
+                <div class="connected-chip" id="connectedChip">Conectado: —</div>
+            </div>
+
+            <!-- Campo de tags: digite separadas por vírgula -->
+            <input type="text" id="tags" placeholder="Tags (separe por vírgula)">
+            <div id="tagsContainer" class="tags-container" aria-live="polite"></div>
+        </section>
+    </div>
+
+    <div class="grid mid-grid">
+        <section class="panel small-panel">
+            <h3 class="panel-title-sm">Usar Stream Key:</h3>
+            <label class="label">Chave de transmissão:</label>
+            <input type="password" id="streamKey" placeholder="Chave de transmissão">
+            <label class="label">Senha (opcional)*:</label>
+            <input type="password" id="streamPassword" placeholder="Senha (opcional)">
+            <p class="hint small">Nunca compartilhe sua stream key. Qualquer um com ela pode transmitir no seu canal.</p>
+        </section>
+
+        <section class="panel small-panel mic-panel">
+            <h3 class="panel-title-sm">Permitir microfone:</h3>
+            <div class="mic-row">
+                <button id="micBtn" class="btn pill">Permitir</button>
+                <button id="micMute" class="btn pill" aria-pressed="false">Silenciar</button>
+                <div class="mic-outer">
+                    <div class="mic-bar" id="micBar"></div>
+                </div>
+                <input id="micVolume" class="mic-volume" type="range" min="0" max="100" value="100" aria-label="Volume do microfone">
+                <label for="micSensitivity" class="mic-sens-label">Sensibilidade</label>
+                <input id="micSensitivity" class="mic-sensitivity" type="range" min="0.5" max="4" step="0.1" value="1.8" aria-label="Sensibilidade do microfone">
+            </div>
+            <!-- Audio Mixer: captura (display), microfone e overlay (opcional) -->
+            <div class="mixer" id="audioMixer">
+                <h3 class="panel-title-sm">Mixer de Áudio</h3>
+                <div class="mixer-row">
+                    <div class="mixer-left">Captura</div>
+                    <button id="captureMute" class="btn pill" aria-pressed="false">Mutar</button>
+                    <input id="captureVolume" type="range" min="0" max="100" value="100" class="mic-volume" aria-label="Volume da captura">
+                    <div class="mixer-meter"><div class="meter-fill" id="captureMeter"></div></div>
+                </div>
+                <div class="mixer-row">
+                    <div class="mixer-left">Microfone</div>
+                    <!-- reusa o botão micMute e micVolume já presentes; duplicar controles aqui visually -->
+                    <button id="micMuteSmall" class="btn pill" aria-pressed="false">Mutar</button>
+                    <input id="micVolumeSmall" type="range" min="0" max="100" value="100" class="mic-volume" aria-label="Volume do microfone (mixer)">
+                    <div class="mixer-meter"><div class="meter-fill" id="micMeter"></div></div>
+                </div>
+                <div class="mixer-row">
+                    <div class="mixer-left">Overlay</div>
+                    <button id="overlayMute" class="btn pill" aria-pressed="false">Mutar</button>
+                    <input id="overlayVolume" type="range" min="0" max="100" value="100" class="mic-volume" aria-label="Volume do overlay">
+                    <div class="mixer-meter"><div class="meter-fill" id="overlayMeter"></div></div>
+                </div>
+            </div>
+            <p class="hint small">O site BROCKER.TV deseja acessar seu microfone para melhor comunicação durante a transmissão.</p>
+        </section>
+    </div>
+
+    <div class="grid bottom-grid">
+        <section class="panel capture-panel">
+            <h3 class="panel-title-sm">Selecionar fonte de captura</h3>
+            <label class="label">Janela do jogo:</label>
+            <button id="selectScreen" class="btn select">Minecraft Bedrock ▾</button>
+            <p class="hint small">Melhor performance: selecione "Janela do jogo" e rode o jogo em janela sem borda (borderless).</p>
+        </section>
+
+        <section class="panel controls">
+            <div class="status">
+                <p id="timer">00:00:00</p>
+                <!-- Estatísticas dinâmicas: FPS e Bitrate são atualizadas via JS -->
+                <p id="stats">FPS: — | Bitrate: — kbps</p>
+                <p id="platformInfo">Plataforma: —</p>
+            </div>
+
+            <div class="action-buttons">
+                <!-- Botões de ação: Pausar aparece apenas quando a transmissão começar -->
+                <button id="btnStart" class="btn start" disabled>Transmitir</button>
+                <!-- O botão Pausar está desativado por enquanto (removido) -->
+                <!-- O botão Encerrar aparece somente durante a transmissão -->
+                <button id="btnStop" class="btn stop" style="display:none;">Encerrar</button>
+                <!-- View stream: abre popup com a transmissão atual (se houver) -->
+                <button id="btnView" class="btn outline view">Ver transmissão</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Seção mostrando o que está sendo transmitido (preview) -->
+    <section class="panel preview-panel" id="previewPanel">
+        <h3 class="panel-title-sm">O que está sendo transmitido</h3>
+        <div class="preview-controls">
+            <button id="previewToggle" class="btn outline" disabled>Ocultar visualização</button>
+        </div>
+        <div id="previewArea" class="preview-area">
+            <video id="previewVideo" autoplay muted playsinline style="width:100%;border-radius:8px;background:#000;display:none"></video>
+            <p id="previewText" class="hint small">Nenhuma transmissão em andamento.</p>
+        </div>
+    </section>
+
+</main>
+
+</main>
+
+<!-- Confetti layer (dynamically populated) -->
+<div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
+
+<!-- Modals: Profile, Settings, XP -->
+<div id="modalOverlay" class="modal-overlay" aria-hidden="true">
+    <div id="profileModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="profileModalTitle">Perfil</h3>
+                <button class="modal-close" data-close="profileModal" aria-label="Fechar">✕</button>
+            </div>
+            <div class="modal-body profile-card-body">
+                <div class="profile-card">
+                    <div class="card-header">
+                        <div class="avatar-wrap">
+                            <div class="avatar">B</div>
+                            <div class="user-meta">
+                                <div class="name">Bikyrt</div>
+                                <div class="handle">@bikyrt</div>
+                                <div class="followers">26 Seguidores</div>
+                            </div>
+                        </div>
+                        <button id="btnAccessChannel" class="channel-link btn" style="background:transparent;border:none;padding:6px 8px;color:#1b6fff;">Acessar canal</button>
+                    </div>
+
+                    <div class="connected-pill" style="margin-top:6px;">● Conectado como: usuario@gmail.com</div>
+
+                    <div class="xp-block">
+                        <div class="xp-title">Você está quase lá.</div>
+                        <div class="xp-bar-large"><div class="xp-fill-large" style="width:85%"></div></div>
+                        <div class="xp-sub">150 XP PARA O NÍVEL 2</div>
+                    </div>
+
+                    <div class="modal-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+                        <button class="btn" id="menuManageProfile">Gerenciar perfil</button>
+                        <button class="btn" id="menuSettings">Configurações</button>
+                        <button class="btn" id="menuConnectedAccounts">Contas conectadas</button>
+                        <button class="btn" id="menuLogout">Sair</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="settingsModalTitle">Configurações</h3>
+                <button class="modal-close" data-close="settingsModal" aria-label="Fechar">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Preferências rápidas de transmissão e áudio.</p>
+                <label class="label">Ativar som de nível:</label>
+                <input type="checkbox" id="toggleLevelSound" checked>
+            </div>
+        </div>
+    </div>
+
+    <div id="xpModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="xpModalTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="xpModalTitle">XP & Recompensas</h3>
+                <button class="modal-close" data-close="xpModal" aria-label="Fechar">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Progresso atual e recompensas desbloqueadas.</p>
+                <div id="xpRewardsList" class="muted">(Lista de recompensas aqui)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gerenciar Perfil: explica finalidade/ações do gerenciamento -->
+    <div id="manageProfileModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="manageProfileModalTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="manageProfileModalTitle">Gerenciar Perfil</h3>
+                <button class="modal-close" data-close="manageProfileModal" aria-label="Fechar">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Aqui você pode alterar nome público, avatar, biografia e preferências do seu perfil no BROCKER.TV. As alterações são salvas localmente e sincronizadas com suas contas conectadas quando aplicável.</p>
+                <ul>
+                    <li><strong>Nome público:</strong> Aparece para espectadores.</li>
+                    <li><strong>Avatar:</strong> Imagem exibida no player e nos comentários.</li>
+                    <li><strong>Biografia:</strong> Texto curto mostrado no seu perfil.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contas Conectadas: descreve vinculação de plataformas e controle de conexão -->
+    <div id="accountsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="accountsModalTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="accountsModalTitle">Contas conectadas</h3>
+                <button class="modal-close" data-close="accountsModal" aria-label="Fechar">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Vincule e gerencie suas contas externas (Twitch, YouTube, Kick, Steam). Aqui você pode desconectar contas, renovar permissões e revisar quais recursos cada conexão permite.</p>
+                <div id="accountsList" class="accounts-list">
+                    <!-- contas serão renderizadas aqui via JS -->
+                </div>
+                <div class="hint small" style="margin-top:10px">Dica: clique em "Conectar" na tela principal para adicionar uma conta. Use o botão remover para desconectar.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="loginModalTitle">Entrar</h3>
+                <button class="modal-close" data-close="loginModal" aria-label="Fechar">✕</button>
+            </div>
+            <div class="modal-body">
+                <label class="label">Nome de usuário ou e-mail</label>
+                <input type="text" id="loginUsername" placeholder="Usuário ou e-mail">
+                <label class="label">Senha</label>
+                <input type="password" id="loginPassword" placeholder="Senha">
+                <div style="display:flex;gap:8px;margin-top:12px;align-items:center;">
+                    <button id="loginSubmit" class="btn">Entrar</button>
+                    <button class="btn outline modal-close" data-close="loginModal">Cancelar</button>
+                </div>
+                <div style="margin-top:10px">
+                    <div class="muted">Ou entre com:</div>
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                        <button class="btn outline" id="loginTwitch">Twitch</button>
+                        <button class="btn outline" id="loginGoogle">Google</button>
+                    </div>
+                </div>
+                <div id="loginError" class="muted" style="color:#d33;margin-top:8px;display:none"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="registerModalTitle" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="registerModalTitle">Cadastrar</h3>
+                <button class="modal-close" data-close="registerModal" aria-label="Fechar">✕</button>
+            </div>
+            <div class="modal-body">
+                <label class="label">Nome de usuário</label>
+                <input type="text" id="registerUsername" placeholder="Nome público">
+                <label class="label">E-mail</label>
+                <input type="email" id="registerEmail" placeholder="seu@exemplo.com">
+                <label class="label">Senha</label>
+                <input type="password" id="registerPassword" placeholder="Senha">
+                <div style="display:flex;gap:8px;margin-top:12px;align-items:center;">
+                    <button id="registerSubmit" class="btn">Criar conta</button>
+                    <button class="btn outline modal-close" data-close="registerModal">Cancelar</button>
+                </div>
+                <div style="margin-top:10px">
+                    <div class="muted">Ou cadastrar com:</div>
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                        <button class="btn outline" id="registerTwitch">Twitch</button>
+                        <button class="btn outline" id="registerGoogle">Google</button>
+                    </div>
+                </div>
+                <div id="registerError" class="muted" style="color:#d33;margin-top:8px;display:none"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal genérico de informação para os links do topo (Documentos, Github, Empresa, Recursos) -->
+    <div id="infoModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="infoModalTitle">Informação</h3>
+                <button class="modal-close" data-close="infoModal" aria-label="Fechar">✕</button>
+            </div>
+            <div class="modal-body" id="infoModalBody">
+                <p>Conteúdo informativo será exibido aqui.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal do canal (abre ao clicar em 'Acessar canal' no modal de perfil) -->
+    <!-- Modal genérico para conectar plataformas (insira ID/Client ID quando necessário) -->
+    <div id="platformConnectModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="platformConnectModalTitle" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="platformConnectModalTitle">Conectar Plataforma</h3>
+                <button class="modal-close" data-close="platformConnectModal" aria-label="Fechar">✕</button>
+            </div>
+            <div class="modal-body">
+                <p id="platformConnectDescription">Informe o identificador da sua conta na plataforma selecionada.</p>
+                <label class="label">Plataforma:</label>
+                <div id="platformConnectName" style="font-weight:700;margin-bottom:8px;">—</div>
+
+                <label class="label">Seu ID / Usuário na plataforma:</label>
+                <input type="text" id="platformUserIdInput" placeholder="Ex: seu_usuario_123">
+
+                <label class="label" style="margin-top:8px">(Opcional) Client ID / App ID:</label>
+                <input type="text" id="platformClientIdInput" placeholder="Client ID (se aplicável)">
+
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                    <button id="platformSaveBtn" class="btn">Salvar</button>
+                    <button class="btn outline modal-close" data-close="platformConnectModal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="channelModal" class="modal channel-modal" role="dialog" aria-modal="true" aria-labelledby="channelModalTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="channelModalTitle">Meu Canal</h3>
+                <button class="modal-close" data-close="channelModal" aria-label="Fechar">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="channel-card">
+                    <div class="title">Seu canal</div>
+                    <div class="channel-stats">
+                        <div class="stat"><h4>Duração</h4><p>01:35:29</p></div>
+                        <div class="stat"><h4>Visualizações</h4><p>35</p></div>
+                    </div>
+                    <p class="muted">Visão geral do canal — aqui você pode ver estatísticas rápidas, entrar no seu canal ou ajustar opções específicas do canal.</p>
+                    <!-- XP progress for channel (rainbow animated) -->
+                    <div class="xp-large-wrap">
+                        <div class="xp-large-title">XP 850 / 1000</div>
+                        <div class="xp-bar-rainbow">
+                            <div class="xp-fill-rainbow" style="width:85%"></div>
+                            <div class="xp-sheen"></div>
+                            <div class="xp-label">850 XP</div>
+                        </div>
+                        <div class="xp-sub" style="margin-top:8px">150 XP PARA O NÍVEL 2</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
